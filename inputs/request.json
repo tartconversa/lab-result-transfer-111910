@@ -1,0 +1,13 @@
+{
+  "authorized_samples": [
+    "s1",
+    "s2"
+  ],
+  "project": "project-alpha",
+  "requested_items": [
+    "latency",
+    "power",
+    "thermal"
+  ],
+  "archive_reference": "handoff-1"
+}
