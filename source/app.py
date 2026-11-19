@@ -17,6 +17,7 @@ class Site(Provider):
     def reports(self):
         rows=[{'id':'R-A','sample':'s1','configuration':'card-c1/driver-d10/fw-f2','items':['latency'],'status':'revoked' if self.state['revoked'] else 'signed','revision':1,'originals':['latency-1.bin'],'supersedes':[]},
               {'id':'R-J','sample':'s1','configuration':'card-c1/driver-d10/fw-f2','items':['power','thermal'],'status':'signed','revision':1,'originals':['power-1.bin','thermal-1.bin'],'joint':True,'supersedes':[]},
+              {'id':'R-C','sample':'s2','configuration':'card-c2/driver-d9/fw-f1','items':['bandwidth','stability'],'status':'signed','revision':1,'originals':['bandwidth-1.bin','stability-1.bin'],'supersedes':[]},
               {'id':'PRE','sample':'s2','configuration':'card-c2/driver-d9/fw-f1','items':['latency'],'status':'preview','revision':1,'originals':['latency-2.bin']}]
         if self.state['retest']:rows.append({'id':'R-B','sample':'s1','configuration':'card-c1/driver-d10/fw-f3','items':['latency'],'status':'signed','revision':2,'originals':['latency-2.bin'],'supersedes':['R-A:latency']})
         return rows
@@ -47,7 +48,7 @@ document.querySelector('#submit').onclick=async()=>{let r=await fetch('/archive'
             if r['status']!='signed':return Reply({'error':'not_signed'},409)
             if not set(d['items'])<=set(r['items']) or (r.get('joint') and set(d['items'])!=set(r['items'])):return Reply({'error':'joint_scope'},422)
             if any(n not in self.state['uploads'] for n in r['originals']):return Reply({'error':'missing_original'},422)
-            accepted=[] if self.state['partial'] else d['items']
+            accepted=([] if r.get('joint') else d['items'][:1]) if self.state['partial'] else d['items']
             receipt={'report':r['id'],'revision':r['revision'],'accepted':{i:'ARC-'+d['key']+'-'+i for i in accepted},'pending':list(set(d['items'])-set(accepted))}
             self.state['receipts'][d['key']]=receipt
             if self.state['lose_reply']:self.state['lose_reply']=False;return Reply({'error':'gateway_after_write'},503)

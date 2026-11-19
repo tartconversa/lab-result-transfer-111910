@@ -1,3 +1,4 @@
+import base64,json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from playwright.sync_api import expect
@@ -14,3 +15,12 @@ class LabTest(SourceTest):
         self.control('retest');p.goto(self.base+'/report?id=R-B');expect(p.locator('#report')).to_contain_text('R-A:latency')
         self.control('revoke');p.goto(self.base+'/report?id=R-A');expect(p.locator('#report')).to_contain_text('revoked')
         self.assertEqual(self.request('/archive',{'key':'x','report':'R-J','items':['power']})[0],422)
+    def test_partial_independent_projects(self):
+        for n in ['bandwidth-1.bin','stability-1.bin']:
+            raw=self.request('/original?name='+n)[1]
+            self.assertEqual(self.request('/upload',{'name':n,'bytes':base64.b64encode(raw).decode()})[0],200)
+        self.control('partial')
+        receipt=json.loads(self.request('/archive',{'key':'partial-1','report':'R-C','items':['bandwidth','stability']})[1])
+        self.assertEqual(list(receipt['accepted']),['bandwidth']);self.assertEqual(receipt['pending'],['stability'])
+        self.control('complete')
+        receipt=json.loads(self.request('/archive',{'key':'partial-2','report':'R-C','items':['stability']})[1]);self.assertEqual(list(receipt['accepted']),['stability'])
